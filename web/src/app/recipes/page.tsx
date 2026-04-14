@@ -14,12 +14,9 @@ const MEAL_TABS = [
 ];
 
 const FILTER_TAGS = [
-  { value: '',             label: 'Tout'       },
-  { value: 'high-protein', label: 'Protéiné'   },
-  { value: 'quick',        label: 'Rapide'     },
-  { value: 'vegan',        label: 'Vegan'      },
-  { value: 'meal-prep',    label: 'Batch cook' },
-  { value: 'keto',         label: 'Keto'       },
+  { value: 'high-protein', label: 'Protéiné' },
+  { value: 'quick',        label: 'Rapide'   },
+  { value: 'vegan',        label: 'Vegan'    },
 ];
 
 type ViewMode = 'grid' | 'list';
@@ -87,7 +84,7 @@ export default function RecipesPage() {
         {/* Search */}
         <div className="mb-4">
           <input
-            className="w-full px-5 py-3 rounded-full bg-white border-none text-sm placeholder:text-warm-300 focus:ring-2 focus:ring-brand-200 outline-none"
+            className="w-full px-5 py-3 rounded-2xl bg-white border-none text-sm placeholder:text-warm-300 focus:ring-2 focus:ring-brand-200 outline-none"
             placeholder="Rechercher une recette..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -95,37 +92,27 @@ export default function RecipesPage() {
           />
         </div>
 
-        {/* Remaining macros — compact */}
-        {data?.remaining && (
-          <p className="text-xs text-warm-400 mb-4 px-1">
-            <span className="text-orange-500 font-medium">{data.remaining.calories} kcal</span>
-            {' · '}{data.remaining.protein}g prot · {data.remaining.carbs}g gluc · {data.remaining.fat}g lip restants
-          </p>
-        )}
-
-        {/* Meal tabs + filters — one compact zone */}
-        <div className="flex items-center gap-5 overflow-x-auto scrollbar-hide mb-3 px-1">
+        {/* Pills — meal types + diet filters */}
+        <div className="flex gap-2 flex-wrap mb-5">
           {MEAL_TABS.map((tab, i) => (
             <button
-              key={tab.value}
-              onClick={() => setActiveTab(i)}
-              className={`whitespace-nowrap text-[13px] font-semibold transition-colors ${
-                activeTab === i
-                  ? 'text-warm-900'
-                  : 'text-warm-300 hover:text-warm-500'
+              key={`tab-${tab.value}`}
+              onClick={() => { setActiveTab(i); setFilterTag(''); }}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                activeTab === i && !filterTag
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-white text-warm-500 hover:text-warm-700'
               }`}
             >
               {tab.label}
             </button>
           ))}
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-5 pb-1">
+          <div className="w-px bg-warm-200 shrink-0 my-1" />
           {FILTER_TAGS.map((ft) => (
             <button
-              key={ft.value}
-              onClick={() => setFilterTag(ft.value)}
-              className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+              key={`filter-${ft.value}`}
+              onClick={() => setFilterTag(ft.value === filterTag ? '' : ft.value)}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
                 filterTag === ft.value
                   ? 'bg-brand-500 text-white'
                   : 'bg-white text-warm-500 hover:text-warm-700'
