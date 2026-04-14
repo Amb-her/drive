@@ -1,6 +1,15 @@
 # NutriDrive — CLAUDE.md
 
-Smart grocery drive app for sport & nutrition. Users pick recipes → macros are auto-tracked + ingredients auto-added to cart.
+## Objectif
+
+NutriDrive est un drive courses intelligent pour sportifs. L'utilisateur définit son objectif physique (prise de muscle, perte de gras, maintien), et l'app :
+
+1. **Calcule ses besoins** — BMR (Mifflin-St Jeor) + niveau d'activité → TDEE → répartition macros (protéines prioritaires selon l'objectif)
+2. **Recommande des recettes** — scorées par proximité macro (40% protéines, 30% calories, 15% glucides, 15% lipides)
+3. **Suit les macros en temps réel** — log des repas → macros restants pour la journée
+4. **Remplit le panier automatiquement** — ajout d'une recette → ses ingrédients tombent dans la liste de courses
+
+En résumé : un Jow orienté sport/nutrition. L'utilisateur ne réfléchit plus à quoi manger ni quoi acheter — l'app le fait en fonction de ses objectifs physiques.
 
 ---
 
