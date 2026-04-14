@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "NutriDrive",
+    "slug": "nutridrive",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nutridrive",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nutridrive.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#22c55e"
+      },
+      "package": "com.nutridrive.app"
+    }
+  }
+}

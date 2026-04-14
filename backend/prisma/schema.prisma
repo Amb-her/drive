@@ -1,0 +1,364 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTH & USER
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile       UserProfile?
+  mealLogs      MealLog[]
+  shoppingLists ShoppingList[]
+  favorites     UserFavoriteRecipe[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Données physiques
+  age            Int
+  sex            Sex
+  heightCm       Float
+  weightKg       Float
+  morphology     Morphology
+  activityLevel  ActivityLevel
+
+  // Objectifs
+  goal           Goal
+
+  // Contraintes alimentaires
+  dietaryConstraints DietaryConstraint[]
+
+  // Foyer
+  adultsCount    Int @default(1)
+  childrenCount  Int @default(0)
+
+  // Cuisine & équipements
+  kitchenEquipment String[] // ex: ["OVEN", "AIRFRYER", "BLENDER"]
+
+  // Ingrédients à éviter (goûts)
+  dislikedIngredients String[] // ex: ["Brocoli", "Coriandre"]
+
+  // Cycle menstruel (optionnel)
+  trackMenstrualCycle Boolean @default(false)
+  cycleStartDate      DateTime?
+  cycleLengthDays     Int?
+
+  // Valeurs calculées
+  bmr              Float   // Métabolisme de base
+  dailyCalories    Float   // Besoins caloriques journaliers
+  proteinGrams     Float   // Protéines en grammes
+  carbGrams        Float   // Glucides en grammes
+  fatGrams         Float   // Lipides en grammes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model DietaryConstraint {
+  id        String      @id @default(uuid())
+  profileId String
+  profile   UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type      ConstraintType
+
+  @@unique([profileId, type])
+  @@map("dietary_constraints")
+}
+
+// ─────────────────────────────────────────────
+// RECETTES
+// ─────────────────────────────────────────────
+
+model Recipe {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String?
+  prepTimeMin Int      // Temps de préparation en minutes
+  cookTimeMin Int      // Temps de cuisson en minutes
+  servings    Int      // Nombre de portions
+  difficulty  Difficulty
+  instructions String[] // Étapes de préparation
+
+  // Nutrition par portion
+  caloriesPerServing Float
+  proteinPerServing  Float
+  carbsPerServing    Float
+  fatPerServing      Float
+  fiberPerServing    Float @default(0)
+
+  // Scores
+  nutriScore  NutriScore
+  greenScore  Int        @default(50) // 0-100, impact environnemental
+
+  // Tags
+  tags        RecipeTag[]
+
+  // Relations
+  ingredients RecipeIngredient[]
+  mealLogs    MealLog[]
+  favorites   UserFavoriteRecipe[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("recipes")
+}
+
+model RecipeTag {
+  id       String @id @default(uuid())
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag      String // ex: "high-protein", "low-carb", "vegan", "quick", "batch-cooking"
+
+  @@unique([recipeId, tag])
+  @@map("recipe_tags")
+}
+
+model UserFavoriteRecipe {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recipeId])
+  @@map("user_favorite_recipes")
+}
+
+// ─────────────────────────────────────────────
+// INGRÉDIENTS
+// ─────────────────────────────────────────────
+
+model Ingredient {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  category    IngredientCategory
+  unit        String  // ex: "g", "ml", "pièce"
+  imageUrl    String?
+
+  // Nutrition pour 100g/100ml
+  caloriesPer100 Float
+  proteinPer100  Float
+  carbsPer100    Float
+  fatPer100      Float
+  fiberPer100    Float @default(0)
+
+  // Lien Open Food Facts
+  openFoodFactsId String?
+
+  recipes         RecipeIngredient[]
+  driveProducts   DriveProduct[]
+  substitutions   IngredientSubstitution[] @relation("original")
+  substitutedBy   IngredientSubstitution[] @relation("substitute")
+
+  @@map("ingredients")
+}
+
+model RecipeIngredient {
+  id           String     @id @default(uuid())
+  recipeId     String
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Float      // Quantité
+  unit         String     // Unité pour cette recette
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+model IngredientSubstitution {
+  id             String     @id @default(uuid())
+  originalId     String
+  original       Ingredient @relation("original", fields: [originalId], references: [id])
+  substituteId   String
+  substitute     Ingredient @relation("substitute", fields: [substituteId], references: [id])
+  ratio          Float      @default(1.0) // Ratio de conversion
+
+  @@unique([originalId, substituteId])
+  @@map("ingredient_substitutions")
+}
+
+// ─────────────────────────────────────────────
+// SHOPPING / DRIVE
+// ─────────────────────────────────────────────
+
+model ShoppingList {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String @default("Ma liste")
+  status ShoppingListStatus @default(ACTIVE)
+
+  items     ShoppingItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shopping_lists")
+}
+
+model ShoppingItem {
+  id             String       @id @default(uuid())
+  shoppingListId String
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  ingredientName String   // Nom de l'ingrédient
+  quantity       Float
+  unit           String
+  checked        Boolean  @default(false)
+  category       IngredientCategory
+
+  // Lien optionnel vers produit drive
+  driveProductId String?
+  driveProduct   DriveProduct? @relation(fields: [driveProductId], references: [id])
+
+  @@map("shopping_items")
+}
+
+model DriveProduct {
+  id           String     @id @default(uuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  // Infos produit drive
+  driveName    String     // ex: "Carrefour", "Leclerc"
+  productName  String
+  productUrl   String?
+  imageUrl     String?
+  price        Float
+  unit         String
+  quantity     Float
+
+  shoppingItems ShoppingItem[]
+
+  @@map("drive_products")
+}
+
+// ─────────────────────────────────────────────
+// TRACKING
+// ─────────────────────────────────────────────
+
+model MealLog {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId String
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+  date     DateTime @default(now())
+  mealType MealType
+  servings Float    @default(1)
+
+  // Snapshot des macros au moment du log
+  calories Float
+  protein  Float
+  carbs    Float
+  fat      Float
+
+  @@map("meal_logs")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum Morphology {
+  ECTOMORPH
+  MESOMORPH
+  ENDOMORPH
+}
+
+enum ActivityLevel {
+  SEDENTARY      // Sédentaire
+  LIGHTLY_ACTIVE // Légèrement actif
+  ACTIVE         // Actif
+  VERY_ACTIVE    // Très actif
+  ATHLETE        // Athlète
+}
+
+enum Goal {
+  FAT_LOSS       // Perte de gras
+  MUSCLE_GAIN    // Prise de masse
+  MAINTAIN       // Maintien
+  HEALTHY_EATING // Alimentation saine
+}
+
+enum ConstraintType {
+  VEGETARIAN
+  VEGAN
+  GLUTEN_FREE
+  LACTOSE_FREE
+  NUT_FREE
+  SHELLFISH_FREE
+  HALAL
+  KOSHER
+  LOW_FODMAP
+  KETO
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum NutriScore {
+  A
+  B
+  C
+  D
+  E
+}
+
+enum IngredientCategory {
+  PROTEIN       // Viandes, poissons, oeufs
+  DAIRY         // Produits laitiers
+  GRAIN         // Céréales, pâtes, riz
+  VEGETABLE     // Légumes
+  FRUIT         // Fruits
+  FAT           // Huiles, beurre
+  CONDIMENT     // Épices, sauces
+  BEVERAGE      // Boissons
+  SNACK         // Snacks
+  OTHER
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum ShoppingListStatus {
+  ACTIVE
+  ORDERED
+  COMPLETED
+}
