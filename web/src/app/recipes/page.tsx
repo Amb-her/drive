@@ -63,14 +63,12 @@ export default function RecipesPage() {
     <>
       <NavBar />
 
-      {/* Toast */}
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-brand-600 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg whitespace-nowrap">
           {toast}
         </div>
       )}
 
-      {/* Detail modal */}
       {selected && (
         <RecipeDetail
           recipe={selected}
@@ -84,7 +82,8 @@ export default function RecipesPage() {
         {/* Search */}
         <div className="mb-4">
           <input
-            className="w-full px-5 py-3 rounded-2xl bg-white border-none text-sm placeholder:text-warm-300 focus:ring-2 focus:ring-brand-200 outline-none"
+            className="w-full px-5 py-3 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-brand-200 border-none"
+            style={{ background: 'var(--input)', color: 'var(--t1)' }}
             placeholder="Rechercher une recette..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -92,7 +91,7 @@ export default function RecipesPage() {
           />
         </div>
 
-        {/* Pills — meal types + diet filters */}
+        {/* Pills */}
         <div className="flex gap-2 flex-wrap mb-5">
           {MEAL_TABS.map((tab, i) => (
             <button
@@ -101,13 +100,14 @@ export default function RecipesPage() {
               className={`whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
                 activeTab === i && !filterTag
                   ? 'bg-brand-500 text-white'
-                  : 'bg-white text-warm-500 hover:text-warm-700'
+                  : 'text-t2 hover:text-t1'
               }`}
+              style={activeTab === i && !filterTag ? {} : { background: 'var(--card)' }}
             >
               {tab.label}
             </button>
           ))}
-          <div className="w-px bg-warm-200 shrink-0 my-1" />
+          <div className="w-px shrink-0 my-1" style={{ background: 'var(--border)' }} />
           {FILTER_TAGS.map((ft) => (
             <button
               key={`filter-${ft.value}`}
@@ -115,8 +115,9 @@ export default function RecipesPage() {
               className={`whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
                 filterTag === ft.value
                   ? 'bg-brand-500 text-white'
-                  : 'bg-white text-warm-500 hover:text-warm-700'
+                  : 'text-t2 hover:text-t1'
               }`}
+              style={filterTag === ft.value ? {} : { background: 'var(--card)' }}
             >
               {ft.label}
             </button>
@@ -125,23 +126,18 @@ export default function RecipesPage() {
 
         {/* Grid / List */}
         {loading ? (
-          <div className={viewMode === 'grid'
-            ? 'grid grid-cols-2 lg:grid-cols-3 gap-4'
-            : 'flex flex-col gap-2'
-          }>
+          <div className={viewMode === 'grid' ? 'grid grid-cols-2 lg:grid-cols-3 gap-4' : 'flex flex-col gap-2'}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className={`bg-white rounded-3xl animate-pulse ${viewMode === 'grid' ? 'aspect-square' : 'h-20'}`} />
+              <div key={i} className={`rounded-3xl animate-pulse ${viewMode === 'grid' ? 'aspect-square' : 'h-20'}`}
+                style={{ background: 'var(--card)' }} />
             ))}
           </div>
         ) : recipes.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="text-warm-400 text-sm">Aucune recette trouvée</p>
+            <p className="text-t3 text-sm">Aucune recette trouvée</p>
           </div>
         ) : (
-          <div className={viewMode === 'grid'
-            ? 'grid grid-cols-2 lg:grid-cols-3 gap-4'
-            : 'flex flex-col gap-2'
-          }>
+          <div className={viewMode === 'grid' ? 'grid grid-cols-2 lg:grid-cols-3 gap-4' : 'flex flex-col gap-2'}>
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -173,23 +169,21 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
   const c    = Math.round(recipe.carbsPerServing);
   const f    = Math.round(recipe.fatPerServing);
   const fib  = Math.round(recipe.fiberPerServing);
-
   const totalFromMacros = p * 4 + c * 4 + f * 9;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full md:max-w-md bg-cream-50 md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+      <div className="relative w-full md:max-w-md md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]"
+        style={{ background: 'var(--bg)' }}>
         {/* Photo */}
         <div className="relative shrink-0 p-3 pb-0">
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-cream-200">
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden" style={{ background: 'var(--card-2)' }}>
             {recipe.imageUrl
               ? <img src={recipe.imageUrl} alt={recipe.name} className="w-full h-full object-cover" />
-              : <div className="w-full h-full bg-cream-200" />
+              : <div className="w-full h-full" />
             }
-
-            {/* Close */}
             <button
               onClick={onClose}
               className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-warm-700 flex items-center justify-center text-sm font-medium hover:bg-white transition-colors"
@@ -199,22 +193,19 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
 
         {/* Content */}
         <div className="overflow-y-auto flex-1 px-5 py-5 space-y-5">
-          {/* Title + meta */}
           <div>
-            <h2 className="text-xl font-bold text-warm-900 leading-snug mb-1">{recipe.name}</h2>
-            <p className="text-sm text-warm-400">{totalTime} min · {recipe.servings} portion{recipe.servings > 1 ? 's' : ''}</p>
+            <h2 className="text-xl font-bold text-t1 leading-snug mb-1">{recipe.name}</h2>
+            <p className="text-sm text-t3">{totalTime} min · {recipe.servings} portion{recipe.servings > 1 ? 's' : ''}</p>
           </div>
 
-          {/* Macro pills */}
           <div className="flex gap-2 flex-wrap">
-            <MacroPill label="Calories" value={kcal} unit="kcal" color="bg-orange-100 text-orange-600" />
-            <MacroPill label="Protéines" value={p} unit="g" color="bg-red-50 text-red-500" />
-            <MacroPill label="Glucides" value={c} unit="g" color="bg-blue-50 text-blue-500" />
-            <MacroPill label="Lipides" value={f} unit="g" color="bg-amber-50 text-amber-600" />
-            <MacroPill label="Fibres" value={fib} unit="g" color="bg-green-50 text-green-600" />
+            <MacroPill label="Calories"  value={kcal} unit="kcal" bg="rgba(251,146,60,0.12)"  color="#f97316" />
+            <MacroPill label="Protéines" value={p}    unit="g"    bg="rgba(248,113,113,0.12)" color="#ef4444" />
+            <MacroPill label="Glucides"  value={c}    unit="g"    bg="rgba(96,165,250,0.12)"  color="#3b82f6" />
+            <MacroPill label="Lipides"   value={f}    unit="g"    bg="rgba(251,191,36,0.12)"  color="#d97706" />
+            <MacroPill label="Fibres"    value={fib}  unit="g"    bg="rgba(74,222,128,0.12)"  color="#16a34a" />
           </div>
 
-          {/* Distribution bar */}
           {totalFromMacros > 0 && (
             <div>
               <div className="flex h-2 rounded-full overflow-hidden gap-px">
@@ -222,7 +213,7 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
                 <div className="bg-blue-400" style={{ width: `${c * 4 / totalFromMacros * 100}%` }} />
                 <div className="bg-amber-400 rounded-r-full" style={{ width: `${f * 9 / totalFromMacros * 100}%` }} />
               </div>
-              <div className="flex gap-4 mt-2 text-[11px] text-warm-400">
+              <div className="flex gap-4 mt-2 text-[11px] text-t3">
                 <span>{Math.round(p * 4 / totalFromMacros * 100)}% prot</span>
                 <span>{Math.round(c * 4 / totalFromMacros * 100)}% gluc</span>
                 <span>{Math.round(f * 9 / totalFromMacros * 100)}% lip</span>
@@ -230,7 +221,6 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
             </div>
           )}
 
-          {/* NutriScore */}
           <div className="flex items-center gap-2">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
@@ -238,20 +228,20 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
             >
               {recipe.nutriScore}
             </div>
-            <span className="text-xs text-warm-400">Nutri-Score</span>
+            <span className="text-xs text-t3">Nutri-Score</span>
           </div>
 
-          {/* Description */}
           {recipe.description && (
-            <p className="text-sm text-warm-500 leading-relaxed">{recipe.description}</p>
+            <p className="text-sm text-t2 leading-relaxed">{recipe.description}</p>
           )}
         </div>
 
         {/* CTAs */}
-        <div className="p-4 flex gap-3 shrink-0">
+        <div className="p-4 flex gap-3 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
           <button
             onClick={() => { onAddToCart(recipe); onClose(); }}
-            className="flex-1 py-3.5 rounded-full bg-white text-warm-700 text-sm font-semibold hover:bg-cream-200 transition-colors"
+            className="flex-1 py-3.5 rounded-full text-t1 text-sm font-semibold transition-colors hover:opacity-80"
+            style={{ background: 'var(--card)' }}
           >
             Ajouter au panier
           </button>
@@ -267,13 +257,15 @@ function RecipeDetail({ recipe, onClose, onAddToCart, onLog }: {
   );
 }
 
-function MacroPill({ label, value, unit, color }: {
-  label: string; value: number; unit: string; color: string;
+function MacroPill({ label, value, unit, bg, color }: {
+  label: string; value: number; unit: string; bg: string; color: string;
 }) {
   return (
-    <div className={`${color} px-3 py-2 rounded-2xl`}>
-      <p className="text-[10px] opacity-70 mb-0.5">{label}</p>
-      <p className="text-sm font-bold leading-none">{value}<span className="text-[10px] font-normal ml-0.5">{unit}</span></p>
+    <div className="px-3 py-2 rounded-2xl" style={{ background: bg }}>
+      <p className="text-[10px] mb-0.5" style={{ color, opacity: 0.7 }}>{label}</p>
+      <p className="text-sm font-bold leading-none" style={{ color }}>
+        {value}<span className="text-[10px] font-normal ml-0.5">{unit}</span>
+      </p>
     </div>
   );
 }

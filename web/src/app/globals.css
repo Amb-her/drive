@@ -2,14 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Tokens couleurs light / dark ── */
 :root {
-  --foreground: #1a1a1a;
-  --background: #fdf4e7;
+  --bg:     #fdf4e7;
+  --card:   #ffffff;
+  --card-2: #faecd6;
+  --border: #faecd6;
+  --input:  #ffffff;
+  --nav:    rgba(253, 244, 231, 0.8);
+  --t1:     #1a1a1a;
+  --t2:     #6b6b6b;
+  --t3:     #9a9a9a;
+  --t4:     #bfbfbf;
+}
+
+.dark {
+  --bg:     #1c1814;
+  --card:   #272118;
+  --card-2: #312a22;
+  --border: #3d3028;
+  --input:  #2e2720;
+  --nav:    rgba(28, 24, 18, 0.85);
+  --t1:     #ede8df;
+  --t2:     #a89e94;
+  --t3:     #7a7268;
+  --t4:     #5a5248;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--t1);
+  background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -27,13 +49,30 @@ body {
   }
 
   .card {
-    @apply bg-white rounded-3xl p-6;
+    @apply rounded-3xl p-6;
+    background: var(--card);
   }
 
   .input {
-    @apply w-full px-4 py-3 rounded-2xl border border-warm-200 bg-white
-           focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all;
+    @apply w-full px-4 py-3 rounded-2xl border outline-none transition-all;
+    background: var(--input);
+    color: var(--t1);
+    border-color: var(--border);
+    @apply focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
   }
+}
+
+/* Utilitaires sémantiques dark-aware */
+@layer utilities {
+  .bg-page  { background: var(--bg); }
+  .bg-card  { background: var(--card); }
+  .bg-card2 { background: var(--card-2); }
+  .bg-inp   { background: var(--input); }
+  .text-t1  { color: var(--t1); }
+  .text-t2  { color: var(--t2); }
+  .text-t3  { color: var(--t3); }
+  .text-t4  { color: var(--t4); }
+  .div-sep  { border-color: var(--border); }
 }
 
 /* Hide scrollbar but keep scroll */

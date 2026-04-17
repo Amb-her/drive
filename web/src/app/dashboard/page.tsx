@@ -3,153 +3,194 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { NavBar } from '@/components/NavBar';
-import { MacroProgress } from '@/components/MacroProgress';
+import { useStore } from '@/lib/store';
+
+const GOAL_LABELS: Record<string, string> = {
+  MUSCLE_GAIN: 'Prise de muscle',
+  FAT_LOSS:    'Perte de gras',
+  MAINTAIN:    'Maintien',
+};
+
+const MEAL_TYPE_LABELS: Record<string, string> = {
+  BREAKFAST: 'Petit-déjeuner',
+  LUNCH:     'Déjeuner',
+  DINNER:    'Dîner',
+  SNACK:     'Snack',
+};
 
 export default function DashboardPage() {
-  const [daily, setDaily] = useState<any>(null);
-  const [weekly, setWeekly] = useState<any>(null);
+  const { user } = useStore();
+  const [daily, setDaily]     = useState<any>(null);
+  const [weekly, setWeekly]   = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([api.getDailyDashboard(), api.getWeeklyDashboard()])
-      .then(([d, w]) => {
-        setDaily(d);
-        setWeekly(w);
-      })
+      .then(([d, w]) => { setDaily(d); setWeekly(w); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const goal    = user?.profile?.goal;
+  const hour    = new Date().getHours();
+  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
 
   if (loading) {
     return (
       <>
         <NavBar />
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse text-brand-500">Chargement...</div>
-        </div>
+        <main className="max-w-5xl mx-auto px-5 pt-6 pb-8 space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-3xl h-36 animate-pulse" style={{ background: 'var(--card)' }} />
+          ))}
+        </main>
       </>
     );
   }
 
+  const kcalConsumed  = daily?.consumed?.calories ?? 0;
+  const kcalTarget    = daily?.targets?.calories ?? 2000;
+  const kcalPct       = Math.min(100, (kcalConsumed / kcalTarget) * 100);
+  const circumference = 2 * Math.PI * 52;
+
   return (
     <>
       <NavBar />
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Calories Circle */}
+      <main className="max-w-5xl mx-auto px-5 pt-6 pb-8 space-y-4">
+
+        {/* Greeting */}
+        <div className="pb-1">
+          <h1 className="text-2xl font-bold text-t1">
+            {greeting}{user?.firstName ? `, ${user.firstName}` : ''}
+          </h1>
+          <p className="text-sm text-t3 mt-0.5">
+            {goal ? `Objectif · ${GOAL_LABELS[goal] ?? goal}` : 'Bienvenue sur NutriDrive'}
+          </p>
+        </div>
+
+        {/* Calories + macros */}
         {daily && (
-          <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Aujourd'hui</h2>
-            <div className="flex items-center gap-8">
-              {/* Calorie ring */}
-              <div className="relative w-32 h-32 shrink-0">
-                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+          <div className="rounded-3xl p-5" style={{ background: 'var(--card)' }}>
+            <p className="text-[11px] font-semibold text-t4 uppercase tracking-widest mb-5">Aujourd'hui</p>
+
+            <div className="flex items-center gap-6">
+              {/* Anneau calories */}
+              <div className="relative w-28 h-28 shrink-0">
+                <svg className="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--card-2)" strokeWidth="10" />
                   <circle
                     cx="60" cy="60" r="52" fill="none"
-                    stroke="#22c55e" strokeWidth="10" strokeLinecap="round"
-                    strokeDasharray={`${(daily.progress.calories / 100) * 327} 327`}
+                    stroke="#f97316" strokeWidth="10" strokeLinecap="round"
+                    strokeDasharray={`${(kcalPct / 100) * circumference} ${circumference}`}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-800">{daily.consumed.calories}</span>
-                  <span className="text-xs text-gray-400">/ {daily.targets.calories}</span>
-                  <span className="text-xs text-gray-400">kcal</span>
+                  <span className="text-xl font-bold text-t1">{Math.round(kcalConsumed)}</span>
+                  <span className="text-[10px] text-t3">/ {Math.round(kcalTarget)}</span>
+                  <span className="text-[10px] text-t3">kcal</span>
                 </div>
               </div>
 
-              {/* Macro bars */}
+              {/* Barres macros */}
               <div className="flex-1 space-y-3">
-                <MacroProgress
-                  label="Protéines"
-                  current={daily.consumed.protein}
-                  target={daily.targets.protein}
-                  unit="g"
-                  color="bg-red-500"
-                />
-                <MacroProgress
-                  label="Glucides"
-                  current={daily.consumed.carbs}
-                  target={daily.targets.carbs}
-                  unit="g"
-                  color="bg-blue-500"
-                />
-                <MacroProgress
-                  label="Lipides"
-                  current={daily.consumed.fat}
-                  target={daily.targets.fat}
-                  unit="g"
-                  color="bg-yellow-500"
-                />
+                <InlineMacro label="Protéines" current={daily.consumed.protein} target={daily.targets.protein} color="#f87171" />
+                <InlineMacro label="Glucides"  current={daily.consumed.carbs}   target={daily.targets.carbs}   color="#60a5fa" />
+                <InlineMacro label="Lipides"   current={daily.consumed.fat}     target={daily.targets.fat}     color="#fbbf24" />
               </div>
             </div>
 
-            {/* Remaining */}
-            <div className="mt-4 p-3 bg-brand-50 rounded-xl">
-              <p className="text-sm text-brand-700 font-medium">
-                Il te reste {daily.remaining.calories} kcal —{' '}
-                {daily.remaining.protein}g protéines,{' '}
-                {daily.remaining.carbs}g glucides,{' '}
-                {daily.remaining.fat}g lipides
-              </p>
-            </div>
+            {daily.remaining && (
+              <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                <p className="text-sm text-t2">
+                  Il te reste{' '}
+                  <span className="font-semibold text-orange-500">{Math.round(daily.remaining.calories)} kcal</span>
+                  {' — '}
+                  {Math.round(daily.remaining.protein)}g prot ·{' '}
+                  {Math.round(daily.remaining.carbs)}g gluc ·{' '}
+                  {Math.round(daily.remaining.fat)}g lip
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Today's meals */}
-        {daily?.meals && daily.meals.length > 0 && (
-          <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Repas du jour</h2>
-            <div className="divide-y">
-              {daily.meals.map((meal: any) => (
-                <div key={meal.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-gray-400 uppercase">{meal.mealType}</span>
-                    <p className="font-medium text-gray-700">{meal.recipe?.name || 'Repas'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-orange-500">{Math.round(meal.calories)} kcal</p>
-                    <p className="text-xs text-gray-400">
-                      P:{Math.round(meal.protein)}g C:{Math.round(meal.carbs)}g L:{Math.round(meal.fat)}g
-                    </p>
-                  </div>
+        {/* Repas du jour */}
+        {daily?.meals?.length > 0 && (
+          <div className="rounded-3xl p-5" style={{ background: 'var(--card)' }}>
+            <p className="text-[11px] font-semibold text-t4 uppercase tracking-widest mb-4">Repas du jour</p>
+            {daily.meals.map((meal: any, i: number) => (
+              <div
+                key={meal.id}
+                className="flex items-center justify-between py-3"
+                style={{ borderBottom: i < daily.meals.length - 1 ? '1px solid var(--border)' : undefined }}
+              >
+                <div>
+                  <p className="text-[11px] text-t4 uppercase tracking-wide mb-0.5">
+                    {MEAL_TYPE_LABELS[meal.mealType] ?? meal.mealType}
+                  </p>
+                  <p className="text-sm font-medium text-t1">{meal.recipe?.name ?? 'Repas'}</p>
                 </div>
-              ))}
-            </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-orange-500">{Math.round(meal.calories)} kcal</p>
+                  <p className="text-[11px] text-t3">{Math.round(meal.protein)}g protéines</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Weekly chart */}
+        {/* Graphe semaine */}
         {weekly && (
-          <div className="card">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Cette semaine</h2>
-            <div className="flex items-end gap-2 h-40">
+          <div className="rounded-3xl p-5" style={{ background: 'var(--card)' }}>
+            <p className="text-[11px] font-semibold text-t4 uppercase tracking-widest mb-5">Cette semaine</p>
+            <div className="flex items-end gap-2 h-24">
               {weekly.week.map((day: any) => {
-                const target = weekly.targets?.calories || 2000;
-                const pct = Math.min(100, Math.round((day.calories / target) * 100));
+                const target  = weekly.targets?.calories ?? 2000;
+                const pct     = Math.min(100, (day.calories / target) * 100);
                 const dayName = new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'short' });
+                const isToday = new Date().toDateString() === new Date(day.date).toDateString();
 
                 return (
-                  <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs text-gray-500">{Math.round(day.calories)}</span>
-                    <div className="w-full bg-gray-100 rounded-t-lg relative" style={{ height: '100px' }}>
+                  <div key={day.date} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div className="w-full rounded-full overflow-hidden relative" style={{ height: 72, background: 'var(--card-2)' }}>
                       <div
-                        className="bg-brand-400 rounded-t-lg absolute bottom-0 w-full transition-all duration-500"
-                        style={{ height: `${pct}%` }}
+                        className="rounded-full absolute bottom-0 w-full transition-all duration-500"
+                        style={{ height: `${pct}%`, background: isToday ? '#f97316' : 'var(--border)' }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-gray-600">{dayName}</span>
+                    <span className="text-[11px] font-medium" style={{ color: isToday ? '#f97316' : 'var(--t3)' }}>
+                      {dayName}
+                    </span>
                   </div>
                 );
               })}
             </div>
             {weekly.averages && (
-              <div className="mt-4 text-center text-sm text-gray-500">
-                Moyenne: {weekly.averages.calories} kcal/jour
-              </div>
+              <p className="mt-4 text-xs text-t3 text-center">
+                Moyenne · <span className="font-medium text-t2">{Math.round(weekly.averages.calories)} kcal/jour</span>
+              </p>
             )}
           </div>
         )}
+
       </main>
     </>
+  );
+}
+
+function InlineMacro({ label, current, target, color }: {
+  label: string; current: number; target: number; color: string;
+}) {
+  const pct = Math.min(100, Math.round((current / (target || 1)) * 100));
+  return (
+    <div>
+      <div className="flex justify-between mb-1">
+        <span className="text-xs text-t2">{label}</span>
+        <span className="text-xs text-t3">{Math.round(current)}g / {Math.round(target)}g</span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--card-2)' }}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
   );
 }

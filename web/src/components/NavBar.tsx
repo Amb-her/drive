@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { ThemeToggle } from './ThemeToggle';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -18,14 +19,12 @@ export function NavBar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-cream-100/80 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 backdrop-blur-md" style={{ background: 'var(--nav)' }}>
         <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/dashboard" className="text-base font-bold text-warm-900">
+          <Link href="/dashboard" className="text-base font-bold text-t1">
             NutriDrive
           </Link>
 
-          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
               const active = pathname.startsWith(item.href);
@@ -34,9 +33,7 @@ export function NavBar() {
                   key={item.href}
                   href={item.href}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                    active
-                      ? 'bg-brand-500 text-white'
-                      : 'text-warm-500 hover:text-warm-700 hover:bg-cream-200'
+                    active ? 'bg-brand-500 text-white' : 'text-t2 hover:text-t1 hover:bg-card2'
                   }`}
                 >
                   {item.label}
@@ -45,33 +42,33 @@ export function NavBar() {
             })}
           </div>
 
-          {/* Desktop user */}
-          <button
-            onClick={logout}
-            className="hidden md:block text-xs text-warm-400 hover:text-warm-700 transition-colors"
-          >
-            Quitter
-          </button>
+          <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={logout} className="text-xs text-t3 hover:text-t1 transition-colors">
+              Quitter
+            </button>
+          </div>
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setOpen(!open)}
-            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-full hover:bg-cream-200 transition-colors"
-            aria-label="Menu"
-          >
-            <span className={`block w-5 h-[2px] bg-warm-900 rounded-full transition-all duration-300 ${open ? 'rotate-45 translate-y-[7px]' : ''}`} />
-            <span className={`block w-5 h-[2px] bg-warm-900 rounded-full transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
-            <span className={`block w-5 h-[2px] bg-warm-900 rounded-full transition-all duration-300 ${open ? '-rotate-45 -translate-y-[7px]' : ''}`} />
-          </button>
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              onClick={() => setOpen(!open)}
+              className="w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-full hover:bg-card2 transition-colors"
+              aria-label="Menu"
+            >
+              <span style={{ display:'block', width:20, height:2, borderRadius:9999, background:'var(--t1)', transform: open ? 'rotate(45deg) translateY(7px)' : undefined, transition:'transform 0.3s' }} />
+              <span style={{ display:'block', width:20, height:2, borderRadius:9999, background:'var(--t1)', opacity: open ? 0 : 1, transition:'opacity 0.3s' }} />
+              <span style={{ display:'block', width:20, height:2, borderRadius:9999, background:'var(--t1)', transform: open ? 'rotate(-45deg) translateY(-7px)' : undefined, transition:'transform 0.3s' }} />
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setOpen(false)} />
-
-          <div className="absolute top-14 left-0 right-0 bg-cream-50 border-b border-cream-200 shadow-lg p-5 space-y-2">
+          <div className="absolute top-14 left-0 right-0 border-b shadow-lg p-5 space-y-2"
+            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
             {NAV_ITEMS.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -80,23 +77,18 @@ export function NavBar() {
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={`block px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-brand-500 text-white'
-                      : 'text-warm-700 hover:bg-cream-200'
+                    active ? 'bg-brand-500 text-white' : 'text-t1 hover:bg-card2'
                   }`}
                 >
                   {item.label}
                 </Link>
               );
             })}
-
-            <div className="border-t border-cream-200 pt-3 mt-3">
-              {user?.firstName && (
-                <p className="text-sm text-warm-400 px-4 mb-2">{user.firstName}</p>
-              )}
+            <div className="pt-3 mt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              {user?.firstName && <p className="text-sm text-t3 px-4 mb-2">{user.firstName}</p>}
               <button
                 onClick={() => { logout(); setOpen(false); }}
-                className="w-full text-left px-4 py-3 rounded-2xl text-sm text-warm-400 hover:bg-cream-200 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-2xl text-sm text-t3 hover:bg-card2 transition-colors"
               >
                 Quitter
               </button>
