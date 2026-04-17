@@ -94,14 +94,19 @@ export class RecipesService {
    * Algorithme: score de compatibilité = proximité des macros cibles
    */
   async getRecommendations(userId: string, mealType?: string) {
+    const mealTypeTag = mealType ? mealType.toLowerCase() : null;
+
     const profile = await this.prisma.userProfile.findUnique({
       where: { userId },
       include: { dietaryConstraints: true },
     });
 
     if (!profile) {
-      // Pas de profil = recettes populaires
-      return this.findAll({ limit: 10 });
+      // Pas de profil = recettes filtrées par mealType si spécifié
+      return this.findAll({
+        limit: 10,
+        tags: mealTypeTag ? [mealTypeTag] : undefined,
+      });
     }
 
     // Calculer les macros déjà consommées aujourd'hui
@@ -143,12 +148,17 @@ export class RecipesService {
       fat: remaining.fat / mealsLeft,
     };
 
-    // Récupérer les recettes compatibles avec les contraintes
+    // Récupérer les recettes compatibles avec les contraintes + mealType
     const constraintTags = this.mapConstraintsToTags(
       profile.dietaryConstraints.map((c) => c.type),
     );
 
+    const mealTypeFilter = mealTypeTag
+      ? { some: { tag: mealTypeTag } }
+      : undefined;
+
     const recipes = await this.prisma.recipe.findMany({
+      where: mealTypeFilter ? { tags: mealTypeFilter } : {},
       include: {
         tags: true,
         ingredients: { include: { ingredient: true } },
