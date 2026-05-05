@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -18,9 +19,14 @@ export default function AuthPage() {
     setError('');
     setLoading(true);
     try {
-      if (isLogin) { await login(form.email, form.password); }
-      else          { await register(form); }
-      router.push('/dashboard');
+      if (isLogin) {
+        await login(form.email, form.password);
+        const me = await api.getMe();
+        router.push(me?.profile ? '/dashboard' : '/onboarding');
+      } else {
+        await register(form);
+        router.push('/onboarding');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
