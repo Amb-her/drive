@@ -78,3 +78,44 @@ body {
 /* Hide scrollbar but keep scroll */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Fluidité globale — toutes les transitions ── */
+html { scroll-behavior: smooth; }
+
+/* Tap feedback mobile */
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* Toutes les cartes et boutons interactifs */
+button, a, [role="button"] {
+  transition-property: opacity, transform, background-color, color, border-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+button:active:not(:disabled), [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Animations d'entrée pour les cartes */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeUp {
+  animation: fadeUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.animate-pulse {
+  background: linear-gradient(
+    90deg,
+    var(--card) 25%,
+    var(--card-2) 50%,
+    var(--card) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.4s ease infinite !important;
+}
