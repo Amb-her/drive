@@ -17,6 +17,7 @@ export interface Recipe {
   nutriScore: string;
   greenScore: number;
   matchScore?: number;
+  instructions?: string[];
   tags?: { tag: string }[];
 }
 
